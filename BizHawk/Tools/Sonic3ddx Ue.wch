@@ -1,0 +1,64 @@
+SystemID GEN
+0003A0	b	u	1	68K RAM	
+0003A1	b	u	1	68K RAM	
+0003BF	b	u	1	68K RAM	forced_inputs_backup
+000A60	w	u	1	68K RAM	forced_input_timer
+000A62	w	u	1	68K RAM	forced_input
+000412	w	u	1	68K RAM	free_controls
+000700	b	h	1	68K RAM	controls
+000703	b	h	1	68K RAM	prev_buttons
+0006B2	w	u	1	68K RAM	global.current_level
+000BC6	w	u	1	68K RAM	
+00C3FE	w	u	1	68K RAM	
+000400	w	u	1	68K RAM	freed_flickies
+000AF8	w	u	1	68K RAM	following_flickies
+000AFC	w	u	1	68K RAM	saved_flickies
+000B10	w	u	1	68K RAM	flickies_to_scatter
+000A9A	w	u	1	68K RAM	rings_to_scatter
+000A9E	w	h	1	68K RAM	HUD.rings (hex encoded)
+000AA2	w	u	1	68K RAM	ring_counter
+000B2A	w	u	1	68K RAM	Shield.frame
+000B2C	w	h	1	68K RAM	Shield
+000B2E	w	h	1	68K RAM	Sound1
+000B30	w	h	1	68K RAM	Sound2
+000B34	w	h	1	68K RAM	Sound3
+000440	w	u	1	68K RAM	global.in_demo
+0006BA	w	s	1	68K RAM	lives_counter
+0006BC	w	u	1	68K RAM	HUD.lives
+0	S	_	1		Sonic
+00C358	w	u	1	68K RAM	Sonic
+00C35E	w	s	1	68K RAM	Sonic.position.x.u16
+00C362	w	s	1	68K RAM	Sonic.position.y.u16
+00C366	w	s	1	68K RAM	Sonic.position.z.u16
+00C36A	w	s	1	68K RAM	Sonic.velocity.x.u16
+00C36E	w	s	1	68K RAM	Sonic.velocity.y.u16
+00C372	w	s	1	68K RAM	Sonic.velocity.z.u16
+00C376	w	s	1	68K RAM	Sonic.velocity.u16
+00C38A	w	h	1	68K RAM	Sonic.angle
+00C38C	w	h	1	68K RAM	Sonic.angle_target
+00C396	w	s	1	68K RAM	Sonic.just_hurt
+00C39C	w	u	1	68K RAM	Sonic.on_ground
+00C3A4	w	u	1	68K RAM	Sonic.floor_height
+00C3D4	w	u	1	68K RAM	Sonic.invincibility_timer
+00C3D6	w	u	1	68K RAM	Sonic.speedshoes_timer
+00C3EE	w	u	1	68K RAM	Sonic.animation
+0	S	_	1		
+000BB0	w	u	1	68K RAM	global.paused
+000B32	w	h	1	68K RAM	current_bgm
+0006BE	w	u	1	68K RAM	special_stage_flag
+000A54	w	u	1	68K RAM	active_objects
+000400	w	u	1	68K RAM	Score
+0006DC	w	u	1	68K RAM	emeralds
+0006B8	w	u	1	68K RAM	level_index
+000416	w	u	1	68K RAM	previous_level?
+00040E	w	u	1	68K RAM	levelselect_unlocked
+000410	w	u	1	68K RAM	directors_cut_enabled
+000C46	b	u	1	68K RAM	main_menu_option
+00043E	w	u	1	68K RAM	demo_num
+000C7A	w	u	1	68K RAM	eggman_hitcount
+000AA4	w	u	1	68K RAM	framecounter.seconds
+000AA6	w	s	1	68K RAM	framecounter.frames
+000BC6	w	u	1	68K RAM	
+000BD8	w	u	1	68K RAM	autosplitter.ingame
+000C48	w	u	1	68K RAM	level_score_showing?
+

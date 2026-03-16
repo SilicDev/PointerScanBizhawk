@@ -1,0 +1,133 @@
+SystemID GEN
+00C1E6	w	s	1	68K RAM	Sonic
+00C1E8	w	h	1	68K RAM	Sonic.0x02
+00C1EA	w	h	1	68K RAM	Sonic.0x04
+00C1EC	w	s	1	68K RAM	Sonic.position.x.u16
+00C1F0	w	s	1	68K RAM	Sonic.position.y.u16
+00C1F4	w	s	1	68K RAM	Sonic.position.z.u16
+00C1EC	d	3	1	68K RAM	Sonic.position.x
+00C1F0	d	3	1	68K RAM	Sonic.position.y
+00C1F4	d	3	1	68K RAM	Sonic.position.z
+00C1F8	w	s	1	68K RAM	Sonic.velocity.x.u16
+00C1FC	w	s	1	68K RAM	Sonic.velocity.y.u16
+00C200	w	s	1	68K RAM	Sonic.velocity.z.u16
+00C204	w	s	1	68K RAM	Sonic.velocity.u16
+00C208	d	h	1	68K RAM	Sonic.0x22
+00C20C	d	h	1	68K RAM	Sonic.0x26
+00C210	d	h	1	68K RAM	Sonic.0x2A
+00C214	d	h	1	68K RAM	Sonic.0x2E
+00C218	w	h	1	68K RAM	Sonic.angle
+00C21A	w	h	1	68K RAM	Sonic.angle_target
+00C21C	w	h	1	68K RAM	Sonic.angle_next
+00C21E	w	u	1	68K RAM	Sonic.0x38
+00C220	w	u	1	68K RAM	Sonic.0x3A
+00C222	w	h	1	68K RAM	Sonic.sprite_flags
+00C224	w	s	1	68K RAM	Sonic.just_hurt
+00C226	w	u	1	68K RAM	Sonic.hurt_fall_timer
+00C228	w	u	1	68K RAM	Sonic.time_until_death
+00C22A	w	u	1	68K RAM	Sonic.on_ground
+00C22C	w	s	1	68K RAM	Sonic.double_jump_state
+00C22E	w	u	1	68K RAM	Sonic.jump_rising
+00C230	w	u	1	68K RAM	Sonic.jumped
+00C232	w	s	1	68K RAM	Sonic.floor_height
+00C234	w	u	1	68K RAM	Sonic.position.x.u16.prev
+00C236	w	u	1	68K RAM	Sonic.position.y.u16.prev
+00C238	w	u	1	68K RAM	Sonic.position.z.u16.prev
+00C23A	w	u	1	68K RAM	Sonic.0x54
+00C23C	w	u	1	68K RAM	Sonic.roll_type
+00C23E	w	u	1	68K RAM	Sonic.0x58
+00C240	w	u	1	68K RAM	Sonic.spinrev_timer
+00C242	w	u	1	68K RAM	Sonic.rotating
+00C244	w	u	1	68K RAM	Sonic.is_idle
+00C246	w	u	1	68K RAM	Sonic.0x60
+00C25E	w	h	1	68K RAM	Sonic.0x78
+00C26E	w	u	1	68K RAM	Sonic.frozen_hits
+00C274	w	u	1	68K RAM	Sonic.0x8E
+00C27A	w	u	1	68K RAM	Sonic.animation
+0	S	_	1		
+000680	w	u	1	68K RAM	live_counter
+000A0C	w	u	1	68K RAM	active_objects
+000A52	w	u	1	68K RAM	rings_to_scatter
+000A56	w	u	1	68K RAM	HUD.rings
+000A58	w	u	1	68K RAM	HUD.rings2
+000A5A	w	s	1	68K RAM	ring_counter
+000A5C	w	u	1	68K RAM	framecounter
+000A8E	w	u	1	68K RAM	flickies_following
+000A90	w	u	1	68K RAM	flickies_freed
+000A92	w	u	1	68K RAM	flickies_saved
+000AA6	w	u	1	68K RAM	flickies_to_scatter
+000AC2	w	u	1	68K RAM	Shield
+000AC4	w	h	1	68K RAM	Sound1
+000AC6	w	h	1	68K RAM	Sound2
+000AC8	b	h	1	68K RAM	current_bgm
+000AF0	w	u	1	68K RAM	
+000BA9	b	h	1	68K RAM	eggman_hitcount
+0006B8	b	h	1	68K RAM	Button.not_pressed
+0006B9	b	h	1	68K RAM	Button.not_pressed2
+0006BA	b	h	1	68K RAM	Button.not_pressed_during_override?
+0006BB	b	h	1	68K RAM	Button.prev_not_pressed
+0006B2	w	u	1	68K RAM	checkpoint
+000A08	d	h	1	68K RAM	
+0	S	_	1		
+00067E	w	h	1	68K RAM	autosplitter.level
+000678	w	h	1	68K RAM	global.current_level
+0	S	_	1		
+00040C	w	u	1	68K RAM	autosplitter.levelselect_unlocked
+0006A2	w	u	1	68K RAM	autosplitter.emeralds
+000A1A	w	h	1	68K RAM	forced_input
+00D189	b	h	1	68K RAM	autosplitter.ppboss
+00F749	b	u	1	68K RAM	autosplitter.ingame
+0	S	_	1		
+000404	w	u	1	68K RAM	
+000AE0	w	h	1	68K RAM	pause_state
+0004E8	w	h	1	68K RAM	
+00CC92	w	h	1	68K RAM	
+000A18	w	h	1	68K RAM	forced_input_timer
+00D376	w	u	1	68K RAM	checkpoint_state
+000B76	w	u	1	68K RAM	main_menu_selection
+000410	w	u	1	68K RAM	in_demo?
+00CCD2	w	u	1	68K RAM	StartObjectData
+00D28C	w	u	1	68K RAM	
+00C28C	w	h	1	68K RAM	
+000A1C	w	u	1	68K RAM	level_cleared
+000B76	w	u	1	68K RAM	level_score_showing?
+000684	w	u	1	68K RAM	special_stage
+0	S	_	1		
+000B6C	w	u	1	68K RAM	LevelData.0x00
+000B6E	w	u	1	68K RAM	LevelData.0x02
+000B70	w	u	1	68K RAM	LevelData.0x04
+000B72	w	u	1	68K RAM	LevelData.0x06
+000B74	w	u	1	68K RAM	LevelData.0x08
+000B76	w	u	1	68K RAM	LevelData.0x0a
+000B78	w	u	1	68K RAM	LevelData.0x0c
+000B7A	w	u	1	68K RAM	LevelData.0x0e
+000B7C	w	u	1	68K RAM	LevelData.0x10
+000B7E	w	u	1	68K RAM	LevelData.0x12
+000B80	w	u	1	68K RAM	LevelData.0x14
+000B82	w	u	1	68K RAM	LevelData.0x16
+000B84	w	u	1	68K RAM	LevelData.0x18
+000B86	w	u	1	68K RAM	LevelData.0x1a
+000B88	w	u	1	68K RAM	LevelData.0x1c
+0	S	_	1		
+0006A6	w	u	1	68K RAM	total_score
+000B70	w	u	1	68K RAM	time_bonus
+000B6E	w	u	1	68K RAM	ring_bonus
+000B76	w	u	1	68K RAM	flicky_bonus_total
+0006A4	w	u	1	68K RAM	flicky_bonus
+000B72	w	u	1	68K RAM	level_score_total
+000B74	w	u	1	68K RAM	???
+000A32	w	h	1	68K RAM	VDP_Control_proxy
+000A34	w	h	1	68K RAM	VDP_Data_proxy
+00084E	w	u	1	68K RAM	
+0	S	_	1		SpecialStage
+00A170	w	u	1	68K RAM	SpecialStage.ring_update
+00A17A	d	h	1	68K RAM	SpecialStage.rings
+00A1FE	w	s	1	68K RAM	SpecialStage.hurtFrames
+00A20E	w	u	1	68K RAM	SpecialStage.onGround
+00A210	d	3	1	68K RAM	SpecialStage.Pos.X
+00A214	d	3	1	68K RAM	SpecialStage.Pos.Y
+00A218	d	3	1	68K RAM	SpecialStage.Progress
+00A222	d	3	1	68K RAM	SpecialStage.Velocity.X
+00A226	d	3	1	68K RAM	SpecialStage.Velocity.Y
+00A22A	d	3	1	68K RAM	SpecialStage.Velocity.Progress
+

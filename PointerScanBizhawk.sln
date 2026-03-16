@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37027.9 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PointerScan", "PointerScan\PointerScan.csproj", "{B81F4982-EB9F-49A6-9309-620A2F62B027}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B81F4982-EB9F-49A6-9309-620A2F62B027}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B81F4982-EB9F-49A6-9309-620A2F62B027}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B81F4982-EB9F-49A6-9309-620A2F62B027}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B81F4982-EB9F-49A6-9309-620A2F62B027}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2B97D04F-2885-4B0C-87D1-1632DC7D033E}
+	EndGlobalSection
+EndGlobal
