@@ -1,9 +1,11 @@
 ﻿using BizHawk.Client.Common;
 using BizHawk.Client.EmuHawk;
 using BizHawk.Common.CollectionExtensions;
+using BizHawk.Emulation.Common;
 using PointerScan.Util;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
@@ -34,6 +36,12 @@ namespace PointerScan
             }
         }
 
+        [RequiredService]
+        private IMemoryDomains? _memoryDomains { get; set; }
+
+        private IMemoryDomains MemoryDomains
+            => _memoryDomains!;
+
         private bool _romLoaded;
         public bool IsRomLoaded
         {
@@ -56,6 +64,7 @@ namespace PointerScan
         private uint MaxDepth = 0;
         private uint MaxOffset = 0;
         private uint RAMOffset = 0;
+        private bool AlignOffset = false;
 
         public enum ToolState
         {
@@ -64,14 +73,24 @@ namespace PointerScan
             FIRST_SCAN,
             ACTIVE,
             RESCANNING,
+            CLEANING,
         }
-
-        public ToolState State { get; private set; } = ToolState.ERROR;
+        private ToolState state = ToolState.ERROR;
+        public ToolState State
+        {
+            get => state;
+            private set
+            {
+                OldState = state;
+                state = value;
+            }
+        }
         public ToolState OldState { get; private set; } = ToolState.ERROR;
 
         public PointerScan()
         {
             InitializeComponent();
+            PointerTable.SortCompare += PointerTable_SortCompare;
             typeof(Control).InvokeMember("DoubleBuffered",
                 BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
                 null, PointerTable, new object[] { DoubleBuffered });
@@ -101,7 +120,6 @@ namespace PointerScan
         public override void Restart()
         {
             IsRomLoaded = false;
-
             try
             {
                 if (APIContainer != null)
@@ -132,6 +150,7 @@ namespace PointerScan
                 SetStatus(Messages.StatusLabel_NoROM, Color.Red);
             }
         }
+
         protected override void UpdateAfter()
         {
             if (APIContainer != null && IsRomLoaded)
@@ -146,7 +165,7 @@ namespace PointerScan
                             if (State != OldState)
                             {
                                 APIContainer.EmuClient.Pause();
-                                var task = Task.Run(PerformFirstScan);
+                                var task = Task.Run(FirstScan);
                             }
                             break;
                         }
@@ -161,43 +180,13 @@ namespace PointerScan
                             if (State != OldState)
                             {
                                 APIContainer.EmuClient.Pause();
-                                var columns = PointerTable.ColumnCount;
-                                var domain = APIContainer.Memory.MainMemoryName;
-                                uint addr_size_uint = (uint)AddressSize;
-                                var address_format = "X" + (addr_size_uint * 2);
-                                foreach (var chain in PointerChains)
-                                {
-                                    var row = ChainRowMap[chain];
-                                    var address_text = Messages.PointerTable_Values_Unknown;
-                                    try
-                                    {
-                                        var final_address = chain.GetResultAddress(APIContainer, AddressSize, domain, RAMOffset);
-                                        if (final_address != Target)
-                                        {
-                                            chain.Invalid = true;
-                                            CleanButton.Enabled = true;
-                                        }
-                                        address_text = string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(APIContainer, AddressSize, final_address, domain, false));
-                                    }
-                                    catch (OutOfMemoryException)
-                                    {
-                                        address_text = Messages.PointerTable_Values_Unknown;
-                                        chain.Invalid = true;
-                                        CleanButton.Enabled = true;
-                                    }
-                                    row.Cells[columns - 1].Value = address_text;
-
-                                }
-                                PointerTable.Update();
-                                State = ToolState.ACTIVE;
+                                var task = Task.Run(Rescan);
                             }
                             break;
                         }
                 }
             }
-            OldState = State;
         }
-
 
         private void SetStatus(string message, Color? color = null)
         {
@@ -205,32 +194,38 @@ namespace PointerScan
             StatusLabel.ForeColor = color ?? Color.Black;
         }
 
-        private void PerformFirstScan()
+        public void FirstScan()
         {
-            if (APIContainer != null)
+            if (APIContainer != null && IsRomLoaded)
             {
                 Thread.Sleep(100);
                 uint addr_size_uint = (uint)AddressSize;
-                var domain = APIContainer.Memory.MainMemoryName;
-                var size = APIContainer.Memory.GetMemoryDomainSize(domain);
+                var domain = MemoryDomains.MainMemory;
+                var size = (uint)domain.Size;
                 Pointers.Clear();
                 PointerChains.Clear();
                 progressBar1.Visible = true;
+                StartButton.Enabled = false;
                 List<uint> addresses_to_check = new List<uint>() { Target };
                 ulong max_progress = MaxDepth * size / addr_size_uint;
                 ulong progress = 0;
+                Dictionary<uint, uint> memoryMap = new Dictionary<uint, uint>();
+                for (uint i = 0; i < size - addr_size_uint; i += addr_size_uint)
+                {
+                    memoryMap[i] = MemoryHelper.ReadMemory(APIContainer, AddressSize, i, domain);
+                }
                 for (uint d = 0; d < MaxDepth; d++)
                 {
                     List<uint> next_addresses_to_check = new List<uint>() { };
-                    for (uint i = 0; i < size - addr_size_uint; i += addr_size_uint)
+                    foreach (uint i in memoryMap.Keys)
                     {
                         progress++;
-                        progressBar1.Value = (int)((progress / (double)max_progress) * 100);
+                        progressBar1.Value = (int)((progress / (double)max_progress) * progressBar1.Maximum);
                         progressBar1.Update();
-                        var value = MemoryHelper.ReadMemory(APIContainer, AddressSize, i, domain) - RAMOffset;
+                        var value = memoryMap[i] - RAMOffset;
                         foreach (uint addr in addresses_to_check)
                         {
-                            if (addr >= value && addr - value < MaxOffset)
+                            if (addr >= value && addr - value < MaxOffset && (!AlignOffset || (addr - value) % addr_size_uint == 0))
                             {
                                 Pointer p;
                                 if (!Pointers.ContainsKey(i))
@@ -281,10 +276,10 @@ namespace PointerScan
                             row.Add("");
                         }
                     }
-                    progressBar1.Value = 1;
+                    progressBar1.Value = progressBar1.Maximum;
                     progressBar1.Update();
                     uint final_address = ptr.GetResultAddress(APIContainer, AddressSize, domain, RAMOffset);
-                    row.Add(string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(APIContainer, AddressSize, final_address, domain, false)));
+                    row.Add(string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(APIContainer, AddressSize, final_address, domain.Name, MemoryDomain.Endian.Little)));
                     var idx = PointerTable.Rows.Add(row.ToArray());
                     ChainRowMap.Add(ptr, PointerTable.Rows[idx]);
                 }
@@ -293,6 +288,7 @@ namespace PointerScan
                 State = ToolState.ACTIVE;
                 progressBar1.Visible = false;
                 ResetButton.Enabled = true;
+                StartButton.Enabled = true;
                 StartButton.Text = Messages.StartButton_Rescan;
             }
         }
@@ -314,6 +310,86 @@ namespace PointerScan
                     list.Add(o);
                     BuildPointerChainsStep(p, start_addr, list, depth + 1);
                 }
+            }
+        }
+
+        public void Rescan()
+        {
+            if (APIContainer != null && IsRomLoaded)
+            {
+                var progress = 0;
+                var max_progress = PointerChains.Count;
+                progressBar1.Visible = true;
+                StartButton.Enabled = false;
+                var columns = PointerTable.ColumnCount;
+                var domain = MemoryDomains.MainMemory;
+                uint addr_size_uint = (uint)AddressSize;
+                var address_format = "X" + (addr_size_uint * 2);
+                foreach (var chain in PointerChains)
+                {
+                    progress++;
+                    progressBar1.Value = (int)((progress / (double)max_progress) * progressBar1.Maximum);
+                    progressBar1.Update();
+                    var row = ChainRowMap[chain];
+                    var address_text = Messages.PointerTable_Values_Unknown;
+                    try
+                    {
+                        var final_address = chain.GetResultAddress(APIContainer, AddressSize, domain, RAMOffset);
+                        if (final_address != Target)
+                        {
+                            chain.Invalid = true;
+                            CleanButton.Enabled = true;
+                        }
+                        address_text = string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(APIContainer, AddressSize, final_address, domain.Name, MemoryDomain.Endian.Little));
+                    }
+                    catch (OutOfMemoryException)
+                    {
+                        address_text = Messages.PointerTable_Values_Unknown;
+                        chain.Invalid = true;
+                        CleanButton.Enabled = true;
+                    }
+                    row.Cells[columns - 1].Value = address_text;
+
+                }
+                PointerTable.Update();
+                State = ToolState.ACTIVE;
+                StartButton.Enabled = true;
+                progressBar1.Visible = false;
+            }
+        }
+
+        public void Clean()
+        {
+            if (APIContainer != null)
+            {
+                progressBar1.Visible = true;
+                CleanButton.Enabled = false;
+                StartButton.Enabled = false;
+                ResetButton.Enabled = false;
+                List<PointerChain> chains_to_remove = new List<PointerChain>();
+                foreach (var chain in PointerChains)
+                {
+                    if (chain.Invalid)
+                    {
+                        PointerTable.Rows.Remove(ChainRowMap[chain]);
+                        chains_to_remove.Add(chain);
+                    }
+                }
+                var progress = 0;
+                var max_progress = chains_to_remove.Count;
+                chains_to_remove.ForEach(ch =>
+                {
+                    progress++;
+                    progressBar1.Value = (int)((progress / (double)max_progress) * progressBar1.Maximum);
+                    progressBar1.Update();
+                    ChainRowMap.Remove(ch);
+                    PointerChains.Remove(ch);
+                });
+                ResultsLabel.Text = string.Format(Messages.ResultsLabel_Template, PointerTable.Rows.Count);
+                State = ToolState.ACTIVE;
+                progressBar1.Visible = false;
+                StartButton.Enabled = true;
+                ResetButton.Enabled = true;
             }
         }
 
@@ -352,6 +428,7 @@ namespace PointerScan
                     }
                     MaxDepth = (uint)MaxDepthUpDown.Value;
                     AddressSize = MemoryHelper.AddressSize.None;
+                    AlignOffset = AlignToggle.Checked;
                     switch (AddressSizeOptions.SelectedIndex)
                     {
                         case 0:
@@ -369,13 +446,16 @@ namespace PointerScan
                         ResultsLabel.Text = Messages.ResultsLabel_ErrorAddressSize;
                         return;
                     }
-                    if (State == ToolState.READY)
+                    State = State switch
                     {
-                        State = ToolState.FIRST_SCAN;
-                    }
-                    if (State == ToolState.ACTIVE)
+                        ToolState.READY => ToolState.FIRST_SCAN,
+                        ToolState.ACTIVE => ToolState.RESCANNING,
+                        _ => throw new InvalidEnumArgumentException("Invalid State for start button action!"),
+                    };
+                    StartButton.Enabled = false;
+                    if (APIContainer.EmuClient.IsPaused())
                     {
-                        State = ToolState.RESCANNING;
+                        APIContainer.EmuClient.DoFrameAdvance();
                     }
                 }
             }
@@ -389,32 +469,22 @@ namespace PointerScan
                 {
                     State = ToolState.READY;
                     PointerTable.Rows.Clear();
+                    ResultsLabel.Text = "";
                     ResetButton.Enabled = false;
+                    StartButton.Enabled = true;
                     StartButton.Text = Messages.StartButton_Start;
                     CleanButton.Enabled = false;
                 }
             }
         }
+
         private void CleanButton_Click(object sender, EventArgs e)
         {
             if (APIContainer != null)
             {
-                CleanButton.Enabled = false;
-                List<PointerChain> chains_to_remove = new List<PointerChain>();
-                foreach (var chain in PointerChains)
-                {
-                    if (chain.Invalid)
-                    {
-                        PointerTable.Rows.Remove(ChainRowMap[chain]);
-                        chains_to_remove.Add(chain);
-                    }
-                }
-                chains_to_remove.ForEach(ch =>
-                {
-                    ChainRowMap.Remove(ch);
-                    PointerChains.Remove(ch);
-                });
-                ResultsLabel.Text = string.Format(Messages.ResultsLabel_Template, PointerTable.Rows.Count);
+                State = ToolState.CLEANING;
+                APIContainer.EmuClient.Pause();
+                Clean();
             }
         }
 
@@ -422,12 +492,12 @@ namespace PointerScan
         {
             if (e.Column.Index == 0)
             {
-                e.SortResult = Math.Sign((int)uint.Parse(e.CellValue1.ToString(), NumberStyles.HexNumber) - uint.Parse(e.CellValue2.ToString(), NumberStyles.HexNumber));
+                e.SortResult = Math.Sign((long)uint.Parse(e.CellValue1.ToString(), NumberStyles.HexNumber) - uint.Parse(e.CellValue2.ToString(), NumberStyles.HexNumber));
                 e.Handled = true;
             }
             else if (e.Column.Index == PointerTable.ColumnCount - 1)
             {
-                e.SortResult = Math.Sign((int)uint.Parse(e.CellValue1.ToString().Split('=')[0], NumberStyles.HexNumber) - uint.Parse(e.CellValue2.ToString().Split('=')[0], NumberStyles.HexNumber));
+                e.SortResult = Math.Sign((long)uint.Parse(e.CellValue1.ToString().Split('=')[0], NumberStyles.HexNumber) - uint.Parse(e.CellValue2.ToString().Split('=')[0], NumberStyles.HexNumber));
                 e.Handled = true;
             }
             else
@@ -457,7 +527,7 @@ namespace PointerScan
                         }
                         else
                         {
-                            e.SortResult = Math.Sign((int)uint.Parse(callValue1, NumberStyles.HexNumber) - uint.Parse(callValue2, NumberStyles.HexNumber));
+                            e.SortResult = Math.Sign((long)uint.Parse(callValue1, NumberStyles.HexNumber) - uint.Parse(callValue2, NumberStyles.HexNumber));
                         }
                     }
                     index--;
@@ -479,8 +549,8 @@ namespace PointerScan
                         var chain = kvp.Value.Key;
                         uint addr_size_uint = (uint)AddressSize;
                         var address_format = "X" + (addr_size_uint * 2);
-                        var addr = MemoryHelper.ReadMemory(APIContainer, AddressSize, chain.StartAddress, APIContainer.Memory.MainMemoryName);
-                        var msg = string.Format("[{0:" + address_format + "}]=>{1:" + address_format + "}", chain.StartAddress, addr);
+                        var addr = MemoryHelper.ReadMemory(APIContainer, AddressSize, chain.StartAddress, MemoryDomains.MainMemory);
+                        var msg = string.Format("[{0:" + address_format + "}]=>{1:" + address_format + "}", chain.StartAddress + RAMOffset, addr);
                         for (int i = 0; i < chain.Offsets.Count; i++)
                         {
                             uint offset = chain.Offsets[i];
@@ -490,7 +560,7 @@ namespace PointerScan
                             }
                             else
                             {
-                                var new_addr = MemoryHelper.ReadMemory(APIContainer, AddressSize, addr + offset, APIContainer.Memory.MainMemoryName);
+                                var new_addr = MemoryHelper.ReadMemory(APIContainer, AddressSize, addr + offset - RAMOffset, MemoryDomains.MainMemory);
                                 msg += string.Format("\n[{0:" + address_format + "}+{1:X}]=>{2:" + address_format + "}", addr, offset, new_addr);
                                 addr = new_addr;
                             }

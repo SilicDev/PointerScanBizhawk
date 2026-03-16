@@ -1,4 +1,5 @@
 ﻿using BizHawk.Client.Common;
+using BizHawk.Emulation.Common;
 using System;
 using System.Collections.Generic;
 
@@ -17,9 +18,9 @@ namespace PointerScan.Util
             Offsets = offsets;
         }
 
-        public uint GetResultAddress(ApiContainer api, MemoryHelper.AddressSize addr_size, string domain, uint domain_offset)
+        public uint GetResultAddress(ApiContainer api, MemoryHelper.AddressSize addr_size, MemoryDomain domain, uint domain_offset)
         {
-            uint size = api.Memory.GetMemoryDomainSize(domain);
+            uint size = (uint)domain.Size;
             uint resultAddress = StartAddress;
             var address_format = "X" + ((uint)addr_size * 2);
             for (int i = 0; i < Offsets.Count; i++)

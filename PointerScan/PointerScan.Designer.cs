@@ -64,6 +64,7 @@ namespace PointerScan
             this.AddressTextBox = new System.Windows.Forms.TextBox();
             this.AddressLabel = new System.Windows.Forms.Label();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.AlignToggle = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.PointerTable)).BeginInit();
             this.DataPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.MaxDepthUpDown)).BeginInit();
@@ -182,6 +183,7 @@ namespace PointerScan
             // 
             // DataPanel
             // 
+            this.DataPanel.Controls.Add(this.AlignToggle);
             this.DataPanel.Controls.Add(this.PointerDataLabel);
             this.DataPanel.Controls.Add(this.RAMOffsetTextBox);
             this.DataPanel.Controls.Add(this.RAMOffsetLabel);
@@ -204,9 +206,9 @@ namespace PointerScan
             // 
             // PointerDataLabel
             // 
-            this.PointerDataLabel.Location = new System.Drawing.Point(2, 192);
+            this.PointerDataLabel.Location = new System.Drawing.Point(2, 231);
             this.PointerDataLabel.Name = "PointerDataLabel";
-            this.PointerDataLabel.Size = new System.Drawing.Size(148, 180);
+            this.PointerDataLabel.Size = new System.Drawing.Size(148, 141);
             this.PointerDataLabel.TabIndex = 16;
             // 
             // RAMOffsetTextBox
@@ -358,10 +360,22 @@ namespace PointerScan
             // progressBar1
             // 
             this.progressBar1.Location = new System.Drawing.Point(12, 531);
+            this.progressBar1.Maximum = 10000;
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(801, 18);
             this.progressBar1.TabIndex = 10;
             this.progressBar1.Visible = false;
+            // 
+            // AlignToggle
+            // 
+            this.AlignToggle.Checked = true;
+            this.AlignToggle.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.AlignToggle.Location = new System.Drawing.Point(1, 186);
+            this.AlignToggle.Name = "AlignToggle";
+            this.AlignToggle.Size = new System.Drawing.Size(148, 42);
+            this.AlignToggle.TabIndex = 17;
+            this.AlignToggle.Text = "Align offsets with Address size";
+            this.AlignToggle.UseVisualStyleBackColor = true;
             // 
             // PointerScan
             // 
@@ -416,5 +430,6 @@ namespace PointerScan
         private System.Windows.Forms.Label RAMOffsetLabel;
         private System.Windows.Forms.TextBox RAMOffsetTextBox;
         private System.Windows.Forms.Label PointerDataLabel;
+        private System.Windows.Forms.CheckBox AlignToggle;
     }
 }
