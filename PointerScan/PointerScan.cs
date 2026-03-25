@@ -212,7 +212,7 @@ namespace PointerScan
                 Dictionary<uint, uint> memoryMap = new Dictionary<uint, uint>();
                 for (uint i = 0; i < size - addr_size_uint; i += addr_size_uint)
                 {
-                    memoryMap[i] = MemoryHelper.ReadMemory(APIContainer, AddressSize, i, domain);
+                    memoryMap[i] = MemoryHelper.ReadMemory(domain, i, AddressSize);
                 }
                 for (uint d = 0; d < MaxDepth; d++)
                 {
@@ -278,8 +278,8 @@ namespace PointerScan
                     }
                     progressBar1.Value = progressBar1.Maximum;
                     progressBar1.Update();
-                    uint final_address = ptr.GetResultAddress(APIContainer, AddressSize, domain, RAMOffset);
-                    row.Add(string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(APIContainer, AddressSize, final_address, domain.Name, MemoryDomain.Endian.Little)));
+                    uint final_address = ptr.GetResultAddress(AddressSize, domain, RAMOffset);
+                    row.Add(string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(domain, final_address, AddressSize, MemoryDomain.Endian.Little)));
                     var idx = PointerTable.Rows.Add(row.ToArray());
                     ChainRowMap.Add(ptr, PointerTable.Rows[idx]);
                 }
@@ -334,13 +334,13 @@ namespace PointerScan
                     var address_text = Messages.PointerTable_Values_Unknown;
                     try
                     {
-                        var final_address = chain.GetResultAddress(APIContainer, AddressSize, domain, RAMOffset);
+                        var final_address = chain.GetResultAddress(AddressSize, domain, RAMOffset);
                         if (final_address != Target)
                         {
                             chain.Invalid = true;
                             CleanButton.Enabled = true;
                         }
-                        address_text = string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(APIContainer, AddressSize, final_address, domain.Name, MemoryDomain.Endian.Little));
+                        address_text = string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(domain, final_address, AddressSize, MemoryDomain.Endian.Little));
                     }
                     catch (OutOfMemoryException)
                     {
@@ -549,7 +549,7 @@ namespace PointerScan
                         var chain = kvp.Value.Key;
                         uint addr_size_uint = (uint)AddressSize;
                         var address_format = "X" + (addr_size_uint * 2);
-                        var addr = MemoryHelper.ReadMemory(APIContainer, AddressSize, chain.StartAddress, MemoryDomains.MainMemory);
+                        var addr = MemoryHelper.ReadMemory(MemoryDomains.MainMemory, chain.StartAddress, AddressSize);
                         var msg = string.Format("[{0:" + address_format + "}]=>{1:" + address_format + "}", chain.StartAddress + RAMOffset, addr);
                         for (int i = 0; i < chain.Offsets.Count; i++)
                         {
@@ -560,7 +560,7 @@ namespace PointerScan
                             }
                             else
                             {
-                                var new_addr = MemoryHelper.ReadMemory(APIContainer, AddressSize, addr + offset - RAMOffset, MemoryDomains.MainMemory);
+                                var new_addr = MemoryHelper.ReadMemory(MemoryDomains.MainMemory, addr + offset - RAMOffset, AddressSize);
                                 msg += string.Format("\n[{0:" + address_format + "}+{1:X}]=>{2:" + address_format + "}", addr, offset, new_addr);
                                 addr = new_addr;
                             }

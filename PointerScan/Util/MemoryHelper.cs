@@ -14,7 +14,9 @@ namespace PointerScan.Util
             THREE = 3,
             FOUR = 4,
         }
-        public static uint ReadMemory(ApiContainer api, AddressSize addr_size, uint addr, MemoryDomain domain)
+
+        [Obsolete]
+        public static uint ReadMemory(ApiContainer api, uint addr, AddressSize addr_size, MemoryDomain domain)
         {
             api.Memory.SetBigEndian(domain.EndianType == MemoryDomain.Endian.Big);
             switch (addr_size)
@@ -31,7 +33,8 @@ namespace PointerScan.Util
             throw new NotSupportedException();
         }
 
-        public static uint ReadMemory(ApiContainer api, AddressSize addr_size, uint addr, string domain, MemoryDomain.Endian endian = MemoryDomain.Endian.Big)
+        [Obsolete]
+        public static uint ReadMemory(ApiContainer api, uint addr, AddressSize addr_size, string domain, MemoryDomain.Endian endian = MemoryDomain.Endian.Big)
         {
             api.Memory.SetBigEndian(endian == MemoryDomain.Endian.Big);
             switch (addr_size)
@@ -44,6 +47,24 @@ namespace PointerScan.Util
                     return api.Memory.ReadU24(addr, domain);
                 case AddressSize.FOUR:
                     return api.Memory.ReadU32(addr, domain);
+            }
+            throw new NotSupportedException();
+        }
+
+        public static uint ReadMemory(MemoryDomain domain, uint addr, AddressSize addr_size, MemoryDomain.Endian? endian = null)
+        {
+            if (endian == null)
+            {
+                endian = domain.EndianType;
+            }
+            switch (addr_size)
+            {
+                case AddressSize.ONE:
+                    return domain.PeekByte(addr);
+                case AddressSize.TWO:
+                    return domain.PeekUshort(addr, endian == MemoryDomain.Endian.Big);
+                case AddressSize.FOUR:
+                    return domain.PeekUint(addr, endian == MemoryDomain.Endian.Big);
             }
             throw new NotSupportedException();
         }
