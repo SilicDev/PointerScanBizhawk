@@ -124,11 +124,11 @@ namespace PointerScan {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Clean.
+        ///   Looks up a localized string similar to Auto.
         /// </summary>
-        internal static string CleanButton_Label {
+        internal static string AutoButton_Label {
             get {
-                return ResourceManager.GetString("CleanButton_Label", resourceCulture);
+                return ResourceManager.GetString("AutoButton_Label", resourceCulture);
             }
         }
         
@@ -147,87 +147,6 @@ namespace PointerScan {
         internal static string MaxOffsetLabel_Label {
             get {
                 return ResourceManager.GetString("MaxOffsetLabel_Label", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Location.
-        /// </summary>
-        internal static string PointerTable_Headers_BaseLocation {
-            get {
-                return ResourceManager.GetString("PointerTable_Headers_BaseLocation", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Offset 1.
-        /// </summary>
-        internal static string PointerTable_Headers_Offset1 {
-            get {
-                return ResourceManager.GetString("PointerTable_Headers_Offset1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Offset 2.
-        /// </summary>
-        internal static string PointerTable_Headers_Offset2 {
-            get {
-                return ResourceManager.GetString("PointerTable_Headers_Offset2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Offset 3.
-        /// </summary>
-        internal static string PointerTable_Headers_Offset3 {
-            get {
-                return ResourceManager.GetString("PointerTable_Headers_Offset3", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Offset 4.
-        /// </summary>
-        internal static string PointerTable_Headers_Offset4 {
-            get {
-                return ResourceManager.GetString("PointerTable_Headers_Offset4", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Offset 5.
-        /// </summary>
-        internal static string PointerTable_Headers_Offset5 {
-            get {
-                return ResourceManager.GetString("PointerTable_Headers_Offset5", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Offset 6.
-        /// </summary>
-        internal static string PointerTable_Headers_Offset6 {
-            get {
-                return ResourceManager.GetString("PointerTable_Headers_Offset6", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Value.
-        /// </summary>
-        internal static string PointerTable_Headers_Result {
-            get {
-                return ResourceManager.GetString("PointerTable_Headers_Result", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to ??.
-        /// </summary>
-        internal static string PointerTable_Values_Unknown {
-            get {
-                return ResourceManager.GetString("PointerTable_Values_Unknown", resourceCulture);
             }
         }
         
@@ -318,6 +237,51 @@ namespace PointerScan {
         internal static string StatusLabel_NoROM {
             get {
                 return ResourceManager.GetString("StatusLabel_NoROM", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value Size:.
+        /// </summary>
+        internal static string ValueSizeLabel_Label {
+            get {
+                return ResourceManager.GetString("ValueSizeLabel_Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1 Byte.
+        /// </summary>
+        internal static string ValueSizeOptions_1Byte {
+            get {
+                return ResourceManager.GetString("ValueSizeOptions_1Byte", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 2 Bytes.
+        /// </summary>
+        internal static string ValueSizeOptions_2Bytes {
+            get {
+                return ResourceManager.GetString("ValueSizeOptions_2Bytes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 3 Bytes.
+        /// </summary>
+        internal static string ValueSizeOptions_3Bytes {
+            get {
+                return ResourceManager.GetString("ValueSizeOptions_3Bytes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 4 Bytes.
+        /// </summary>
+        internal static string ValueSizeOptions_4Bytes {
+            get {
+                return ResourceManager.GetString("ValueSizeOptions_4Bytes", resourceCulture);
             }
         }
     }

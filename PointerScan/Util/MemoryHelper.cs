@@ -4,16 +4,8 @@ using System;
 
 namespace PointerScan.Util
 {
-    public class MemoryHelper
+    public partial class MemoryHelper
     {
-        public enum AddressSize : byte
-        {
-            None = 0,
-            ONE = 1,
-            TWO = 2,
-            THREE = 3,
-            FOUR = 4,
-        }
 
         [Obsolete]
         public static uint ReadMemory(ApiContainer api, uint addr, AddressSize addr_size, MemoryDomain domain)

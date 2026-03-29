@@ -38,20 +38,14 @@ namespace PointerScan
             this.StatusLabel = new System.Windows.Forms.Label();
             this.VersionLabel = new System.Windows.Forms.Label();
             this.DelayTooltip = new System.Windows.Forms.ToolTip(this.components);
-            this.PointerTable = new System.Windows.Forms.DataGridView();
-            this.LocationColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Offset1Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Offset2Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Offset3Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Offset4Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Offset5Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Offset6Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ValueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.DataPanel = new System.Windows.Forms.Panel();
+            this.ValueSizeLabel = new System.Windows.Forms.Label();
+            this.ValueSizeOptions = new System.Windows.Forms.ComboBox();
+            this.AlignToggle = new System.Windows.Forms.CheckBox();
             this.PointerDataLabel = new System.Windows.Forms.Label();
             this.RAMOffsetTextBox = new System.Windows.Forms.TextBox();
             this.RAMOffsetLabel = new System.Windows.Forms.Label();
-            this.CleanButton = new System.Windows.Forms.Button();
+            this.AutoButton = new System.Windows.Forms.CheckBox();
             this.MaxDepthUpDown = new System.Windows.Forms.NumericUpDown();
             this.MaxDepthLabel = new System.Windows.Forms.Label();
             this.ResetButton = new System.Windows.Forms.Button();
@@ -64,8 +58,7 @@ namespace PointerScan
             this.AddressTextBox = new System.Windows.Forms.TextBox();
             this.AddressLabel = new System.Windows.Forms.Label();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
-            this.AlignToggle = new System.Windows.Forms.CheckBox();
-            ((System.ComponentModel.ISupportInitialize)(this.PointerTable)).BeginInit();
+            this.WatchListView = new BizHawk.Client.EmuHawk.InputRoll();
             this.DataPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.MaxDepthUpDown)).BeginInit();
             this.SuspendLayout();
@@ -94,100 +87,15 @@ namespace PointerScan
             // 
             this.DelayTooltip.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
             // 
-            // PointerTable
-            // 
-            this.PointerTable.AllowUserToAddRows = false;
-            this.PointerTable.AllowUserToDeleteRows = false;
-            this.PointerTable.AllowUserToResizeRows = false;
-            this.PointerTable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.PointerTable.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.LocationColumn,
-            this.Offset1Column,
-            this.Offset2Column,
-            this.Offset3Column,
-            this.Offset4Column,
-            this.Offset5Column,
-            this.Offset6Column,
-            this.ValueColumn});
-            this.PointerTable.Location = new System.Drawing.Point(12, 46);
-            this.PointerTable.Name = "PointerTable";
-            this.PointerTable.ReadOnly = true;
-            this.PointerTable.RowHeadersVisible = false;
-            this.PointerTable.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.PointerTable.Size = new System.Drawing.Size(801, 503);
-            this.PointerTable.TabIndex = 1;
-            this.PointerTable.CurrentCellChanged += new System.EventHandler(this.PointerTable_CurrentCellChanged);
-            // 
-            // LocationColumn
-            // 
-            this.LocationColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.LocationColumn.HeaderText = global::PointerScan.Messages.PointerTable_Headers_BaseLocation;
-            this.LocationColumn.Name = "LocationColumn";
-            this.LocationColumn.ReadOnly = true;
-            // 
-            // Offset1Column
-            // 
-            this.Offset1Column.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.Offset1Column.HeaderText = global::PointerScan.Messages.PointerTable_Headers_Offset1;
-            this.Offset1Column.Name = "Offset1Column";
-            this.Offset1Column.ReadOnly = true;
-            this.Offset1Column.Width = 69;
-            // 
-            // Offset2Column
-            // 
-            this.Offset2Column.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.Offset2Column.HeaderText = global::PointerScan.Messages.PointerTable_Headers_Offset2;
-            this.Offset2Column.Name = "Offset2Column";
-            this.Offset2Column.ReadOnly = true;
-            this.Offset2Column.Width = 69;
-            // 
-            // Offset3Column
-            // 
-            this.Offset3Column.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.Offset3Column.HeaderText = global::PointerScan.Messages.PointerTable_Headers_Offset3;
-            this.Offset3Column.Name = "Offset3Column";
-            this.Offset3Column.ReadOnly = true;
-            this.Offset3Column.Width = 69;
-            // 
-            // Offset4Column
-            // 
-            this.Offset4Column.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.Offset4Column.HeaderText = global::PointerScan.Messages.PointerTable_Headers_Offset4;
-            this.Offset4Column.Name = "Offset4Column";
-            this.Offset4Column.ReadOnly = true;
-            this.Offset4Column.Width = 69;
-            // 
-            // Offset5Column
-            // 
-            this.Offset5Column.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.Offset5Column.HeaderText = global::PointerScan.Messages.PointerTable_Headers_Offset5;
-            this.Offset5Column.Name = "Offset5Column";
-            this.Offset5Column.ReadOnly = true;
-            this.Offset5Column.Width = 69;
-            // 
-            // Offset6Column
-            // 
-            this.Offset6Column.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.Offset6Column.HeaderText = global::PointerScan.Messages.PointerTable_Headers_Offset6;
-            this.Offset6Column.Name = "Offset6Column";
-            this.Offset6Column.ReadOnly = true;
-            this.Offset6Column.Width = 69;
-            // 
-            // ValueColumn
-            // 
-            this.ValueColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.ValueColumn.HeaderText = global::PointerScan.Messages.PointerTable_Headers_Result;
-            this.ValueColumn.Name = "ValueColumn";
-            this.ValueColumn.ReadOnly = true;
-            this.ValueColumn.Width = 160;
-            // 
             // DataPanel
             // 
+            this.DataPanel.Controls.Add(this.ValueSizeLabel);
+            this.DataPanel.Controls.Add(this.ValueSizeOptions);
             this.DataPanel.Controls.Add(this.AlignToggle);
             this.DataPanel.Controls.Add(this.PointerDataLabel);
             this.DataPanel.Controls.Add(this.RAMOffsetTextBox);
             this.DataPanel.Controls.Add(this.RAMOffsetLabel);
-            this.DataPanel.Controls.Add(this.CleanButton);
+            this.DataPanel.Controls.Add(this.AutoButton);
             this.DataPanel.Controls.Add(this.MaxDepthUpDown);
             this.DataPanel.Controls.Add(this.MaxDepthLabel);
             this.DataPanel.Controls.Add(this.ResetButton);
@@ -204,16 +112,50 @@ namespace PointerScan
             this.DataPanel.Size = new System.Drawing.Size(150, 502);
             this.DataPanel.TabIndex = 4;
             // 
+            // ValueSizeLabel
+            // 
+            this.ValueSizeLabel.AutoSize = true;
+            this.ValueSizeLabel.Location = new System.Drawing.Point(2, 69);
+            this.ValueSizeLabel.Name = "ValueSizeLabel";
+            this.ValueSizeLabel.Size = new System.Drawing.Size(60, 13);
+            this.ValueSizeLabel.TabIndex = 19;
+            this.ValueSizeLabel.Text = "Value Size:";
+            // 
+            // ValueSizeOptions
+            // 
+            this.ValueSizeOptions.FormattingEnabled = true;
+            this.ValueSizeOptions.Items.AddRange(new object[] {
+            global::PointerScan.Messages.ValueSizeOptions_1Byte,
+            global::PointerScan.Messages.ValueSizeOptions_2Bytes,
+            global::PointerScan.Messages.ValueSizeOptions_4Bytes});
+            this.ValueSizeOptions.Location = new System.Drawing.Point(75, 66);
+            this.ValueSizeOptions.Name = "ValueSizeOptions";
+            this.ValueSizeOptions.Size = new System.Drawing.Size(75, 21);
+            this.ValueSizeOptions.TabIndex = 18;
+            this.ValueSizeOptions.Text = "1 Byte";
+            this.ValueSizeOptions.SelectedIndexChanged += ValueSizeOptions_SelectedIndexChanged;
+            // 
+            // AlignToggle
+            // 
+            this.AlignToggle.Checked = true;
+            this.AlignToggle.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.AlignToggle.Location = new System.Drawing.Point(3, 216);
+            this.AlignToggle.Name = "AlignToggle";
+            this.AlignToggle.Size = new System.Drawing.Size(148, 42);
+            this.AlignToggle.TabIndex = 17;
+            this.AlignToggle.Text = "Align offsets with Address size";
+            this.AlignToggle.UseVisualStyleBackColor = true;
+            // 
             // PointerDataLabel
             // 
-            this.PointerDataLabel.Location = new System.Drawing.Point(2, 231);
+            this.PointerDataLabel.Location = new System.Drawing.Point(2, 274);
             this.PointerDataLabel.Name = "PointerDataLabel";
-            this.PointerDataLabel.Size = new System.Drawing.Size(148, 141);
+            this.PointerDataLabel.Size = new System.Drawing.Size(148, 98);
             this.PointerDataLabel.TabIndex = 16;
             // 
             // RAMOffsetTextBox
             // 
-            this.RAMOffsetTextBox.Location = new System.Drawing.Point(0, 153);
+            this.RAMOffsetTextBox.Location = new System.Drawing.Point(2, 183);
             this.RAMOffsetTextBox.Name = "RAMOffsetTextBox";
             this.RAMOffsetTextBox.Size = new System.Drawing.Size(150, 20);
             this.RAMOffsetTextBox.TabIndex = 15;
@@ -222,26 +164,29 @@ namespace PointerScan
             // RAMOffsetLabel
             // 
             this.RAMOffsetLabel.AutoSize = true;
-            this.RAMOffsetLabel.Location = new System.Drawing.Point(2, 137);
+            this.RAMOffsetLabel.Location = new System.Drawing.Point(4, 167);
             this.RAMOffsetLabel.Name = "RAMOffsetLabel";
             this.RAMOffsetLabel.Size = new System.Drawing.Size(118, 13);
             this.RAMOffsetLabel.TabIndex = 14;
             this.RAMOffsetLabel.Text = "RAM Base offset (Hex):";
             // 
-            // CleanButton
+            // AutoButton
             // 
-            this.CleanButton.Enabled = false;
-            this.CleanButton.Location = new System.Drawing.Point(5, 449);
-            this.CleanButton.Name = "CleanButton";
-            this.CleanButton.Size = new System.Drawing.Size(139, 21);
-            this.CleanButton.TabIndex = 13;
-            this.CleanButton.Text = global::PointerScan.Messages.CleanButton_Label;
-            this.CleanButton.UseVisualStyleBackColor = true;
-            this.CleanButton.Click += new System.EventHandler(this.CleanButton_Click);
+            this.AutoButton.Appearance = System.Windows.Forms.Appearance.Button;
+            this.AutoButton.Enabled = false;
+            this.AutoButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.AutoButton.Location = new System.Drawing.Point(5, 449);
+            this.AutoButton.Name = "AutoButton";
+            this.AutoButton.Size = new System.Drawing.Size(139, 21);
+            this.AutoButton.TabIndex = 13;
+            this.AutoButton.Text = "Auto";
+            this.AutoButton.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.AutoButton.UseVisualStyleBackColor = true;
+            this.AutoButton.Click += new System.EventHandler(this.AutoButton_Click);
             // 
             // MaxDepthUpDown
             // 
-            this.MaxDepthUpDown.Location = new System.Drawing.Point(75, 108);
+            this.MaxDepthUpDown.Location = new System.Drawing.Point(77, 138);
             this.MaxDepthUpDown.Maximum = new decimal(new int[] {
             6,
             0,
@@ -264,7 +209,7 @@ namespace PointerScan
             // MaxDepthLabel
             // 
             this.MaxDepthLabel.AutoSize = true;
-            this.MaxDepthLabel.Location = new System.Drawing.Point(2, 110);
+            this.MaxDepthLabel.Location = new System.Drawing.Point(4, 140);
             this.MaxDepthLabel.Name = "MaxDepthLabel";
             this.MaxDepthLabel.Size = new System.Drawing.Size(62, 13);
             this.MaxDepthLabel.TabIndex = 11;
@@ -293,7 +238,7 @@ namespace PointerScan
             // 
             // MaxOffsetTextBox
             // 
-            this.MaxOffsetTextBox.Location = new System.Drawing.Point(0, 82);
+            this.MaxOffsetTextBox.Location = new System.Drawing.Point(2, 112);
             this.MaxOffsetTextBox.Name = "MaxOffsetTextBox";
             this.MaxOffsetTextBox.Size = new System.Drawing.Size(150, 20);
             this.MaxOffsetTextBox.TabIndex = 8;
@@ -302,7 +247,7 @@ namespace PointerScan
             // MaxOffsetLabel
             // 
             this.MaxOffsetLabel.AutoSize = true;
-            this.MaxOffsetLabel.Location = new System.Drawing.Point(2, 66);
+            this.MaxOffsetLabel.Location = new System.Drawing.Point(4, 96);
             this.MaxOffsetLabel.Name = "MaxOffsetLabel";
             this.MaxOffsetLabel.Size = new System.Drawing.Size(89, 13);
             this.MaxOffsetLabel.TabIndex = 7;
@@ -366,16 +311,30 @@ namespace PointerScan
             this.progressBar1.TabIndex = 10;
             this.progressBar1.Visible = false;
             // 
-            // AlignToggle
+            // WatchListView
             // 
-            this.AlignToggle.Checked = true;
-            this.AlignToggle.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.AlignToggle.Location = new System.Drawing.Point(1, 186);
-            this.AlignToggle.Name = "AlignToggle";
-            this.AlignToggle.Size = new System.Drawing.Size(148, 42);
-            this.AlignToggle.TabIndex = 17;
-            this.AlignToggle.Text = "Align offsets with Address size";
-            this.AlignToggle.UseVisualStyleBackColor = true;
+            this.WatchListView.AllowColumnReorder = true;
+            this.WatchListView.AllowColumnResize = true;
+            this.WatchListView.AllowDrop = true;
+            this.WatchListView.AllowMassNavigationShortcuts = true;
+            this.WatchListView.AllowRightClickSelection = true;
+            this.WatchListView.AlwaysScroll = false;
+            this.WatchListView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.WatchListView.CellHeightPadding = 0;
+            this.WatchListView.CellWidthPadding = 0;
+            this.WatchListView.ChangeSelectionWhenPaging = true;
+            this.WatchListView.FullRowSelect = true;
+            this.WatchListView.HorizontalOrientation = false;
+            this.WatchListView.LetKeysModifySelection = false;
+            this.WatchListView.Location = new System.Drawing.Point(12, 46);
+            this.WatchListView.Name = "WatchListView";
+            this.WatchListView.RowCount = 0;
+            this.WatchListView.ScrollSpeed = 0;
+            this.WatchListView.SeekingCutoffInterval = 0;
+            this.WatchListView.Size = new System.Drawing.Size(801, 503);
+            this.WatchListView.TabIndex = 1;
             // 
             // PointerScan
             // 
@@ -384,13 +343,12 @@ namespace PointerScan
             this.ClientSize = new System.Drawing.Size(984, 561);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.DataPanel);
-            this.Controls.Add(this.PointerTable);
+            this.Controls.Add(this.WatchListView);
             this.Controls.Add(this.VersionLabel);
             this.Controls.Add(this.StatusLabel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "PointerScan";
-            ((System.ComponentModel.ISupportInitialize)(this.PointerTable)).EndInit();
             this.DataPanel.ResumeLayout(false);
             this.DataPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.MaxDepthUpDown)).EndInit();
@@ -404,7 +362,6 @@ namespace PointerScan
         private System.Windows.Forms.Label StatusLabel;
         private System.Windows.Forms.Label VersionLabel;
         private System.Windows.Forms.ToolTip DelayTooltip;
-        private System.Windows.Forms.DataGridView PointerTable;
         private System.Windows.Forms.Panel DataPanel;
         private System.Windows.Forms.Label AddressLabel;
         private System.Windows.Forms.TextBox AddressTextBox;
@@ -414,22 +371,17 @@ namespace PointerScan
         private System.Windows.Forms.TextBox MaxOffsetTextBox;
         private System.Windows.Forms.Label MaxOffsetLabel;
         private System.Windows.Forms.Label ResultsLabel;
-        private System.Windows.Forms.DataGridViewTextBoxColumn LocationColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Offset1Column;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Offset2Column;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Offset3Column;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Offset4Column;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Offset5Column;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Offset6Column;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ValueColumn;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Button ResetButton;
         private System.Windows.Forms.NumericUpDown MaxDepthUpDown;
         private System.Windows.Forms.Label MaxDepthLabel;
-        private System.Windows.Forms.Button CleanButton;
+        private System.Windows.Forms.CheckBox AutoButton;
         private System.Windows.Forms.Label RAMOffsetLabel;
         private System.Windows.Forms.TextBox RAMOffsetTextBox;
         private System.Windows.Forms.Label PointerDataLabel;
         private System.Windows.Forms.CheckBox AlignToggle;
+        private BizHawk.Client.EmuHawk.InputRoll WatchListView;
+        private System.Windows.Forms.Label ValueSizeLabel;
+        private System.Windows.Forms.ComboBox ValueSizeOptions;
     }
 }

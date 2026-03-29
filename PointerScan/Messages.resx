@@ -120,41 +120,14 @@
   <data name="AppName" xml:space="preserve">
     <value>PointerScan</value>
   </data>
-  <data name="CleanButton_Label" xml:space="preserve">
-    <value>Clean</value>
+  <data name="AutoButton_Label" xml:space="preserve">
+    <value>Auto</value>
   </data>
   <data name="MaxDepthLabel_Label" xml:space="preserve">
     <value>Max Depth:</value>
   </data>
   <data name="MaxOffsetLabel_Label" xml:space="preserve">
     <value>Max Offset (Hex):</value>
-  </data>
-  <data name="PointerTable_Headers_BaseLocation" xml:space="preserve">
-    <value>Location</value>
-  </data>
-  <data name="PointerTable_Headers_Offset1" xml:space="preserve">
-    <value>Offset 1</value>
-  </data>
-  <data name="PointerTable_Headers_Offset2" xml:space="preserve">
-    <value>Offset 2</value>
-  </data>
-  <data name="PointerTable_Headers_Offset3" xml:space="preserve">
-    <value>Offset 3</value>
-  </data>
-  <data name="PointerTable_Headers_Offset4" xml:space="preserve">
-    <value>Offset 4</value>
-  </data>
-  <data name="PointerTable_Headers_Offset5" xml:space="preserve">
-    <value>Offset 5</value>
-  </data>
-  <data name="PointerTable_Headers_Offset6" xml:space="preserve">
-    <value>Offset 6</value>
-  </data>
-  <data name="PointerTable_Headers_Result" xml:space="preserve">
-    <value>Value</value>
-  </data>
-  <data name="PointerTable_Values_Unknown" xml:space="preserve">
-    <value>??</value>
   </data>
   <data name="RamOffsetLabel_Label" xml:space="preserve">
     <value>RAM Base offset (Hex):</value>
@@ -177,17 +150,32 @@
   <data name="AddressSizeOptions_1Byte" xml:space="preserve">
     <value>1 Byte</value>
   </data>
+  <data name="ValueSizeOptions_1Byte" xml:space="preserve">
+    <value>1 Byte</value>
+  </data>
   <data name="AddressSizeOptions_2Bytes" xml:space="preserve">
+    <value>2 Bytes</value>
+  </data>
+  <data name="ValueSizeOptions_2Bytes" xml:space="preserve">
     <value>2 Bytes</value>
   </data>
   <data name="AddressSizeOptions_4Bytes" xml:space="preserve">
     <value>4 Bytes</value>
   </data>
+  <data name="ValueSizeOptions_4Bytes" xml:space="preserve">
+    <value>4 Bytes</value>
+  </data>
   <data name="AddressSizeOptions_3Bytes" xml:space="preserve">
+    <value>3 Bytes</value>
+  </data>
+  <data name="ValueSizeOptions_3Bytes" xml:space="preserve">
     <value>3 Bytes</value>
   </data>
   <data name="AddressSizeLabel_Label" xml:space="preserve">
     <value>Address Size:</value>
+  </data>
+  <data name="ValueSizeLabel_Label" xml:space="preserve">
+    <value>Value Size:</value>
   </data>
   <data name="AddressLabel_Label" xml:space="preserve">
     <value>Address (Hex):</value>

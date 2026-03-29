@@ -3,15 +3,17 @@ using BizHawk.Client.EmuHawk;
 using BizHawk.Common.CollectionExtensions;
 using BizHawk.Emulation.Common;
 using PointerScan.Util;
+using PointerScan.Util.Watches;
+using PointerScan.Util.Watches.WatchList;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Pointer = PointerScan.Util.Pointer;
 
@@ -56,15 +58,22 @@ namespace PointerScan
         public FileVersionInfo PointerScanVersion { get; }
 
         private readonly Dictionary<uint, Pointer> Pointers = new Dictionary<uint, Pointer>();
-        private readonly List<PointerChain> PointerChains = new List<PointerChain> { };
-        private readonly Dictionary<PointerChain, DataGridViewRow> ChainRowMap = new Dictionary<PointerChain, DataGridViewRow>();
+        private PointerWatchList _watches;
+        private IEnumerable<int> SelectedIndices => WatchListView.SelectedRows;
+        private IEnumerable<PointerWatch> SelectedItems => SelectedIndices.Select(index => _watches[index]);
+        private IEnumerable<PointerWatch> SelectedWatches => SelectedItems.Where(x => !x.IsSeparator);
+        private IEnumerable<PointerWatch> SelectedSeparators => SelectedItems.Where(x => x.IsSeparator);
 
         private uint Target = 0;
-        private MemoryHelper.AddressSize AddressSize = 0;
+        private AddressSize AddressSize = 0;
+        private WatchSize ValueSize = 0;
         private uint MaxDepth = 0;
         private uint MaxOffset = 0;
         private uint RAMOffset = 0;
         private bool AlignOffset = false;
+
+        private string _sortedColumn;
+        private bool _sortReverse;
 
         public enum ToolState
         {
@@ -73,7 +82,7 @@ namespace PointerScan
             FIRST_SCAN,
             ACTIVE,
             RESCANNING,
-            CLEANING,
+            IDLE,
         }
         private ToolState state = ToolState.ERROR;
         public ToolState State
@@ -87,34 +96,63 @@ namespace PointerScan
         }
         public ToolState OldState { get; private set; } = ToolState.ERROR;
 
+        //[ConfigPersist]
+        public PointerScanSettings Settings { get; set; }
+
+        public class PointerScanSettings
+        {
+            public PointerScanSettings()
+            {
+                Columns = new List<RollColumn>
+                {
+                    new RollColumn { Name = PointerWatchList.Address, Text = "Address", UnscaledWidth = 60},
+                    new RollColumn { Name = PointerWatchList.Offset1, Text = "Offset 1", UnscaledWidth = 60},
+                    new RollColumn { Name = PointerWatchList.Offset2, Text = "Offset 2", UnscaledWidth = 60},
+                    new RollColumn { Name = PointerWatchList.Offset3, Text = "Offset 3", UnscaledWidth = 60},
+                    new RollColumn { Name = PointerWatchList.Offset4, Text = "Offset 4", UnscaledWidth = 60},
+                    new RollColumn { Name = PointerWatchList.Offset5, Text = "Offset 5", UnscaledWidth = 60},
+                    new RollColumn { Name = PointerWatchList.Offset6, Text = "Offset 6", UnscaledWidth = 60},
+                    new RollColumn { Name = PointerWatchList.Value, Text = "Value", UnscaledWidth = 100},
+                    new RollColumn { Name = PointerWatchList.Prev, Text = "Prev", UnscaledWidth = 60, Visible = false},
+                    new RollColumn { Name = PointerWatchList.ChangesCol, Text = "Changes", UnscaledWidth = 60, Visible = false},
+                };
+            }
+
+            public List<RollColumn> Columns { get; set; }
+            public bool DoubleClickToPoke { get; set; } = true;
+        }
+
+        protected override void GeneralUpdate() => FrameUpdate();
+
         public PointerScan()
         {
             InitializeComponent();
-            PointerTable.SortCompare += PointerTable_SortCompare;
-            typeof(Control).InvokeMember("DoubleBuffered",
-                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
-                null, PointerTable, new object[] { DoubleBuffered });
+            WatchListView.QueryItemBkColor += WatchListView_QueryItemBkColor;
+            WatchListView.QueryItemText += WatchListView_QueryItemText;
+            WatchListView.ColumnClick += WatchListView_ColumnClick;
+            WatchListView.SelectedIndexChanged += WatchListView_SelectedIndexChanged;
 
             PointerScanVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
 
             VersionLabel.Text = $"{WindowTitleStatic} v{PointerScanVersion.ProductVersion.Substring(0, 5)}";
-            PointerTable.Hide();
+
+            Settings = new PointerScanSettings();
+
+            WatchListView.AllColumns.AddRange(Settings.Columns);
+            WatchListView.Refresh();
         }
+
         private void InitAPIContainer()
         {
         }
 
         private void RomLoadedUpdated()
         {
-            PointerTable.Visible = IsRomLoaded;
             StartButton.Enabled = IsRomLoaded;
             StartButton.Text = Messages.StartButton_Start;
-            CleanButton.Enabled = false;
+            AutoButton.Enabled = false;
             ResetButton.Enabled = false;
             Pointers.Clear();
-            PointerChains.Clear();
-            ChainRowMap.Clear();
-            PointerTable.Rows.Clear();
         }
 
         public override void Restart()
@@ -124,6 +162,17 @@ namespace PointerScan
             {
                 if (APIContainer != null)
                 {
+                    if (_watches != null && _watches.All(w => w.Domain == null || MemoryDomains.Select(m => m.Name).Contains(w.Domain.Name)))
+                    {
+                        _watches.RefreshDomains(MemoryDomains, Config.RamWatchDefinePrevious);
+                        //_watches.Reload();
+
+                    }
+                    else
+                    {
+                        _watches = new PointerWatchList(MemoryDomains, APIContainer.Emulation.GetSystemId());
+                        //NewWatchList(true);
+                    }
                     var gameInfo = APIContainer.Emulation.GetGameInfo();
                     if (gameInfo != null)
                     {
@@ -151,39 +200,41 @@ namespace PointerScan
             }
         }
 
-        protected override void UpdateAfter()
+        public override void UpdateValues(ToolFormUpdateType type)
         {
-            if (APIContainer != null && IsRomLoaded)
+            switch (type)
             {
-                switch (State)
+                case ToolFormUpdateType.PostFrame:
+                case ToolFormUpdateType.General:
+                    FrameUpdate();
+                    break;
+                case ToolFormUpdateType.FastPostFrame:
+                    MinimalUpdate();
+                    break;
+            }
+        }
+
+        private void FrameUpdate()
+        {
+            if (_watches.Count is not 0)
+            {
+                if (State == ToolState.ACTIVE)
                 {
-                    case ToolState.ERROR:
-                    case ToolState.READY:
-                        break;
-                    case ToolState.FIRST_SCAN:
-                        {
-                            if (State != OldState)
-                            {
-                                APIContainer.EmuClient.Pause();
-                                var task = Task.Run(FirstScan);
-                            }
-                            break;
-                        }
-                    case ToolState.ACTIVE:
-                        {
-                            // Future? Automatic updating of pointers if low enough amount
-                            // Is there a faster way to access the memory? -> RAM Watch?
-                            break;
-                        }
-                    case ToolState.RESCANNING:
-                        {
-                            if (State != OldState)
-                            {
-                                APIContainer.EmuClient.Pause();
-                                var task = Task.Run(Rescan);
-                            }
-                            break;
-                        }
+                    _watches.UpdateValues(Config.RamWatchDefinePrevious);
+                    Clean();
+                }
+                WatchListView.RowCount = _watches.Count;
+            }
+        }
+
+        private void MinimalUpdate()
+        {
+            if (_watches.Count is not 0)
+            {
+                if (State == ToolState.ACTIVE)
+                {
+                    _watches.UpdateValues(Config.RamWatchDefinePrevious);
+                    Clean();
                 }
             }
         }
@@ -203,17 +254,16 @@ namespace PointerScan
                 var domain = MemoryDomains.MainMemory;
                 var size = (uint)domain.Size;
                 Pointers.Clear();
-                PointerChains.Clear();
                 progressBar1.Visible = true;
                 StartButton.Enabled = false;
                 List<uint> addresses_to_check = new List<uint>() { Target };
-                ulong max_progress = MaxDepth * size / addr_size_uint;
                 ulong progress = 0;
                 Dictionary<uint, uint> memoryMap = new Dictionary<uint, uint>();
-                for (uint i = 0; i < size - addr_size_uint; i += addr_size_uint)
+                for (uint i = 0; i <= size - addr_size_uint; i += addr_size_uint)
                 {
                     memoryMap[i] = MemoryHelper.ReadMemory(domain, i, AddressSize);
                 }
+                ulong max_progress = (ulong)(MaxDepth * memoryMap.LongCount());
                 for (uint d = 0; d < MaxDepth; d++)
                 {
                     List<uint> next_addresses_to_check = new List<uint>() { };
@@ -255,105 +305,67 @@ namespace PointerScan
 
                 foreach (uint addr in Pointers.Keys)
                 {
-                    BuildPointerChainsStep(Pointers[addr], addr, new List<uint>(), 0);
+                    ResolvePointer(Pointers[addr]);
                 }
 
-                var address_format = "X" + (addr_size_uint * 2);
-                foreach (var ptr in PointerChains)
-                {
-                    List<object> row = new List<object>
-                    {
-                        string.Format("{0:" + address_format + "}", ptr.StartAddress)
-                    };
-                    for (int i = 0; i < 6; i++)
-                    {
-                        if (i < ptr.Offsets.Count)
-                        {
-                            row.Add(string.Format("{0:X}", ptr.Offsets[i]));
-                        }
-                        else
-                        {
-                            row.Add("");
-                        }
-                    }
-                    progressBar1.Value = progressBar1.Maximum;
-                    progressBar1.Update();
-                    uint final_address = ptr.GetResultAddress(AddressSize, domain, RAMOffset);
-                    row.Add(string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(domain, final_address, AddressSize, MemoryDomain.Endian.Little)));
-                    var idx = PointerTable.Rows.Add(row.ToArray());
-                    ChainRowMap.Add(ptr, PointerTable.Rows[idx]);
-                }
-
-                ResultsLabel.Text = string.Format(Messages.ResultsLabel_Template, PointerTable.Rows.Count);
-                State = ToolState.ACTIVE;
+                ResultsLabel.Text = string.Format(Messages.ResultsLabel_Template, _watches.Count);
+                State = ToolState.IDLE;
                 progressBar1.Visible = false;
+                AddressSizeOptions.Enabled = false;
                 ResetButton.Enabled = true;
+                AutoButton.Enabled = true;
                 StartButton.Enabled = true;
                 StartButton.Text = Messages.StartButton_Rescan;
+                _watches.UpdateValues(Config.RamWatchDefinePrevious);
+                WatchListView.Refresh();
             }
         }
 
-        private void BuildPointerChainsStep(Pointer pointer, uint start_addr, List<uint> offsets, uint depth)
+        private void ResolvePointer(Pointer pointer)
         {
-            var p = offsets.Count > 0 ? pointer.OffsetMap[offsets[offsets.Count - 1]] : pointer;
-            if (p == null)
+            var offsets = new List<uint>();
+            var addresses = new List<uint>();
+            void Step(Pointer pointer, uint start_addr, List<uint> offsets, List<uint> addresses, uint depth)
             {
-                PointerChains.Add(new PointerChain(start_addr, offsets));
-                return;
-            }
-            else if (depth < MaxDepth)
-            {
-                foreach (uint o in p.OffsetMap.Keys)
+                var p = offsets.Count > 0 ? pointer.OffsetMap[offsets[offsets.Count - 1]] : pointer;
+                if (p == null)
                 {
-                    List<uint> list = new List<uint>();
-                    list.AddRange(offsets);
-                    list.Add(o);
-                    BuildPointerChainsStep(p, start_addr, list, depth + 1);
+                    _watches.Add(PointerWatch.GenerateWatch(MemoryDomains.MainMemory, RAMOffset, start_addr, offsets, AddressSize, ValueSize, WatchDisplayType.Hex, MemoryDomains.MainMemory.EndianType == MemoryDomain.Endian.Big));
+                    return;
+                }
+                else if (addresses.Contains(p.Address))
+                {
+                    return;
+                }
+                else if (depth < MaxDepth)
+                {
+                    foreach (uint o in p.OffsetMap.Keys)
+                    {
+                        List<uint> list = new List<uint>();
+                        list.AddRange(offsets);
+                        list.Add(o);
+                        List<uint> list2 = new List<uint>();
+                        list2.AddRange(addresses);
+                        list2.Add(p.Address);
+                        Step(p, start_addr, list, list2, depth + 1);
+                    }
                 }
             }
+            Step(pointer, pointer.Address, offsets, addresses, 0);
         }
 
         public void Rescan()
         {
             if (APIContainer != null && IsRomLoaded)
             {
-                var progress = 0;
-                var max_progress = PointerChains.Count;
                 progressBar1.Visible = true;
-                StartButton.Enabled = false;
-                var columns = PointerTable.ColumnCount;
                 var domain = MemoryDomains.MainMemory;
                 uint addr_size_uint = (uint)AddressSize;
                 var address_format = "X" + (addr_size_uint * 2);
-                foreach (var chain in PointerChains)
-                {
-                    progress++;
-                    progressBar1.Value = (int)((progress / (double)max_progress) * progressBar1.Maximum);
-                    progressBar1.Update();
-                    var row = ChainRowMap[chain];
-                    var address_text = Messages.PointerTable_Values_Unknown;
-                    try
-                    {
-                        var final_address = chain.GetResultAddress(AddressSize, domain, RAMOffset);
-                        if (final_address != Target)
-                        {
-                            chain.Invalid = true;
-                            CleanButton.Enabled = true;
-                        }
-                        address_text = string.Format("{0:" + address_format + "}={1:" + address_format + "}", final_address, MemoryHelper.ReadMemory(domain, final_address, AddressSize, MemoryDomain.Endian.Little));
-                    }
-                    catch (OutOfMemoryException)
-                    {
-                        address_text = Messages.PointerTable_Values_Unknown;
-                        chain.Invalid = true;
-                        CleanButton.Enabled = true;
-                    }
-                    row.Cells[columns - 1].Value = address_text;
-
-                }
-                PointerTable.Update();
-                State = ToolState.ACTIVE;
-                StartButton.Enabled = true;
+                _watches.UpdateValues(Config.RamWatchDefinePrevious);
+                Clean();
+                WatchListView.Refresh();
+                State = AutoButton.Checked? ToolState.ACTIVE : ToolState.IDLE;
                 progressBar1.Visible = false;
             }
         }
@@ -363,34 +375,64 @@ namespace PointerScan
             if (APIContainer != null)
             {
                 progressBar1.Visible = true;
-                CleanButton.Enabled = false;
                 StartButton.Enabled = false;
                 ResetButton.Enabled = false;
-                List<PointerChain> chains_to_remove = new List<PointerChain>();
-                foreach (var chain in PointerChains)
-                {
-                    if (chain.Invalid)
-                    {
-                        PointerTable.Rows.Remove(ChainRowMap[chain]);
-                        chains_to_remove.Add(chain);
-                    }
-                }
-                var progress = 0;
-                var max_progress = chains_to_remove.Count;
-                chains_to_remove.ForEach(ch =>
-                {
-                    progress++;
-                    progressBar1.Value = (int)((progress / (double)max_progress) * progressBar1.Maximum);
-                    progressBar1.Update();
-                    ChainRowMap.Remove(ch);
-                    PointerChains.Remove(ch);
-                });
-                ResultsLabel.Text = string.Format(Messages.ResultsLabel_Template, PointerTable.Rows.Count);
+                _watches.RemoveAll(w => !w.IsValid || w.TargetAddress != Target);
+                ResultsLabel.Text = string.Format(Messages.ResultsLabel_Template, _watches.Count);
                 State = ToolState.ACTIVE;
                 progressBar1.Visible = false;
                 StartButton.Enabled = true;
                 ResetButton.Enabled = true;
+                WatchListView.Refresh();
             }
+        }
+
+        private void OrderColumn(RollColumn column)
+        {
+            if (column.Name != _sortedColumn)
+            {
+                _sortReverse = false;
+            }
+
+            _watches.OrderWatches(column.Name, _sortReverse);
+
+            _sortedColumn = column.Name;
+            _sortReverse = !_sortReverse;
+            WatchListView.Refresh();
+        }
+
+        private string ComputeDisplayType(PointerWatch w)
+        {
+            string s = w.Size == WatchSize.Byte ? "1" : (w.Size == WatchSize.Word ? "2" : "4");
+            switch (w.Type)
+            {
+                case WatchDisplayType.Binary:
+                    s += "b";
+                    break;
+                case WatchDisplayType.FixedPoint_12_4:
+                    s += "F";
+                    break;
+                case WatchDisplayType.FixedPoint_16_16:
+                    s += "F6";
+                    break;
+                case WatchDisplayType.FixedPoint_20_12:
+                    s += "F2";
+                    break;
+                case WatchDisplayType.Float:
+                    s += "f";
+                    break;
+                case WatchDisplayType.Hex:
+                    s += "h";
+                    break;
+                case WatchDisplayType.Signed:
+                    s += "s";
+                    break;
+                case WatchDisplayType.Unsigned:
+                    s += "u";
+                    break;
+            }
+
+            return s + (w.BigEndian ? "B" : "L");
         }
 
         private void HexTextBox_KeyPress(object sender, KeyPressEventArgs e)
@@ -427,32 +469,58 @@ namespace PointerScan
                         return;
                     }
                     MaxDepth = (uint)MaxDepthUpDown.Value;
-                    AddressSize = MemoryHelper.AddressSize.None;
-                    AlignOffset = AlignToggle.Checked;
+                    AddressSize = AddressSize.None;
                     switch (AddressSizeOptions.SelectedIndex)
                     {
                         case 0:
-                            AddressSize = MemoryHelper.AddressSize.ONE;
+                            AddressSize = AddressSize.ONE;
                             break;
                         case 1:
-                            AddressSize = MemoryHelper.AddressSize.TWO;
+                            AddressSize = AddressSize.TWO;
                             break;
                         case 2:
-                            AddressSize = MemoryHelper.AddressSize.FOUR;
+                            AddressSize = AddressSize.FOUR;
                             break;
                     }
-                    if (AddressSize == MemoryHelper.AddressSize.None)
+                    if (AddressSize == AddressSize.None)
                     {
                         ResultsLabel.Text = Messages.ResultsLabel_ErrorAddressSize;
                         return;
                     }
+                    ValueSize = WatchSize.Separator;
+                    switch (ValueSizeOptions.SelectedIndex)
+                    {
+                        case 0:
+                            ValueSize = WatchSize.Byte;
+                            break;
+                        case 1:
+                            ValueSize = WatchSize.Word;
+                            break;
+                        case 2:
+                            ValueSize = WatchSize.DWord;
+                            break;
+                    }
+                    if (ValueSize == WatchSize.Separator)
+                    {
+                        ResultsLabel.Text = Messages.ResultsLabel_ErrorAddressSize;
+                        return;
+                    }
+                    AlignOffset = AlignToggle.Checked;
                     State = State switch
                     {
                         ToolState.READY => ToolState.FIRST_SCAN,
                         ToolState.ACTIVE => ToolState.RESCANNING,
+                        ToolState.IDLE => ToolState.RESCANNING,
                         _ => throw new InvalidEnumArgumentException("Invalid State for start button action!"),
                     };
-                    StartButton.Enabled = false;
+                    if (State == ToolState.FIRST_SCAN)
+                    {
+                        FirstScan();
+                    }
+                    if (State == ToolState.RESCANNING)
+                    {
+                        Rescan();
+                    }
                     if (APIContainer.EmuClient.IsPaused())
                     {
                         APIContainer.EmuClient.DoFrameAdvance();
@@ -468,109 +536,173 @@ namespace PointerScan
                 if (IsRomLoaded)
                 {
                     State = ToolState.READY;
-                    PointerTable.Rows.Clear();
                     ResultsLabel.Text = "";
+                    PointerDataLabel.Text = "";
+                    _watches.Clear();
+                    WatchListView.Refresh();
                     ResetButton.Enabled = false;
                     StartButton.Enabled = true;
                     StartButton.Text = Messages.StartButton_Start;
-                    CleanButton.Enabled = false;
+                    AutoButton.Enabled = false;
+                    AutoButton.Checked = false;
+                    AddressSizeOptions.Enabled = true;
                 }
             }
         }
 
-        private void CleanButton_Click(object sender, EventArgs e)
+        private void AutoButton_Click(object sender, EventArgs e)
         {
             if (APIContainer != null)
             {
-                State = ToolState.CLEANING;
-                APIContainer.EmuClient.Pause();
-                Clean();
+                State = AutoButton.Checked ? ToolState.ACTIVE : ToolState.IDLE;
             }
         }
 
-        private void PointerTable_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
+        private void ValueSizeOptions_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (e.Column.Index == 0)
+            var watches = _watches.ToList();
+            _watches.Clear();
+            ValueSize = WatchSize.Separator;
+            switch (ValueSizeOptions.SelectedIndex)
             {
-                e.SortResult = Math.Sign((long)uint.Parse(e.CellValue1.ToString(), NumberStyles.HexNumber) - uint.Parse(e.CellValue2.ToString(), NumberStyles.HexNumber));
-                e.Handled = true;
+                case 0:
+                    ValueSize = WatchSize.Byte;
+                    break;
+                case 1:
+                    ValueSize = WatchSize.Word;
+                    break;
+                case 2:
+                    ValueSize = WatchSize.DWord;
+                    break;
             }
-            else if (e.Column.Index == PointerTable.ColumnCount - 1)
+            if (ValueSize == WatchSize.Separator)
             {
-                e.SortResult = Math.Sign((long)uint.Parse(e.CellValue1.ToString().Split('=')[0], NumberStyles.HexNumber) - uint.Parse(e.CellValue2.ToString().Split('=')[0], NumberStyles.HexNumber));
-                e.Handled = true;
+                ResultsLabel.Text = Messages.ResultsLabel_ErrorAddressSize;
+                return;
+            }
+            foreach (PointerWatch w in watches)
+            {
+                _watches.Add(PointerWatch.GenerateWatch(
+                    w.Domain, RAMOffset, w.Address, w.Offsets, AddressSize, ValueSize, WatchDisplayType.Hex, w.BigEndian, w.Notes, w.Value, w.Previous, w.ChangeCount));
+            }
+            _watches.UpdateValues(Config.RamWatchDefinePrevious);
+
+        }
+
+        private void WatchListView_QueryItemBkColor(int index, RollColumn column, ref Color color)
+        {
+            if (index >= _watches.Count)
+            {
+                return;
+            }
+
+            if (_watches[index].IsSeparator)
+            {
+                color = BackColor;
+            }
+            else if (!_watches[index].IsValid)
+            {
+                color = Color.PeachPuff;
+            }
+            else if (_watches[index].TargetAddress != Target)
+            {
+                color = Color.Pink;
+            }
+            else if (MainForm.CheatList.IsActive(_watches[index].Domain, _watches[index].Address))
+            {
+                color = Color.LightCyan;
+            }
+        }
+
+        private void WatchListView_QueryItemText(int index, RollColumn column, out string text, ref int offsetX, ref int offsetY)
+        {
+            text = "";
+            if (index >= _watches.Count)
+            {
+                return;
+            }
+            var watch = _watches[index];
+
+            if (watch.IsSeparator)
+            {
+                if (column.Name == PointerWatchList.Address)
+                {
+                    text = watch.Notes;
+                }
+
+                return;
+            }
+
+            switch (column.Name)
+            {
+                case PointerWatchList.Address:
+                    text = watch.AddressString;
+                    break;
+                case PointerWatchList.Offset1:
+                    if (watch.Offsets.Count > 0)
+                        text = watch.Offsets[0].ToString("X");
+                    break;
+                case PointerWatchList.Offset2:
+                    if (watch.Offsets.Count > 1)
+                        text = watch.Offsets[1].ToString("X");
+                    break;
+                case PointerWatchList.Offset3:
+                    if (watch.Offsets.Count > 2)
+                        text = watch.Offsets[2].ToString("X");
+                    break;
+                case PointerWatchList.Offset4:
+                    if (watch.Offsets.Count > 3)
+                        text = watch.Offsets[3].ToString("X");
+                    break;
+                case PointerWatchList.Offset5:
+                    if (watch.Offsets.Count > 4)
+                        text = watch.Offsets[4].ToString("X");
+                    break;
+                case PointerWatchList.Offset6:
+                    if (watch.Offsets.Count > 5)
+                        text = watch.Offsets[5].ToString("X");
+                    break;
+                case PointerWatchList.Value:
+                    text = watch.TargetAddressString + "=>" + watch.ValueString;
+                    break;
+                case PointerWatchList.Prev:
+                    text = watch.PreviousString;
+                    break;
+                case PointerWatchList.ChangesCol:
+                    if (!watch.IsSeparator)
+                    {
+                        text = watch.ChangeCount.ToString();
+                    }
+
+                    break;
+                case PointerWatchList.Diff:
+                    text = watch.Diff;
+                    break;
+                case PointerWatchList.Type:
+                    text = ComputeDisplayType(watch);
+                    break;
+                case PointerWatchList.Domain:
+                    text = watch.Domain.Name;
+                    break;
+                case PointerWatchList.Notes:
+                    text = watch.Notes;
+                    break;
+            }
+        }
+
+        private void WatchListView_ColumnClick(object sender, InputRoll.ColumnClickEventArgs e)
+            => OrderColumn(e.Column!);
+
+        private void WatchListView_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (WatchListView.SelectedRows.Count() == 1)
+            {
+                PointerDataLabel.Text = _watches[WatchListView.SelectedRows.First()].ToPointerDisplayString();
             }
             else
             {
-                var index = e.Column.Index;
-                e.SortResult = 0;
-                while (index >= 0 && e.SortResult == 0)
-                {
-                    var callValue1 = PointerTable.Rows[e.RowIndex1].Cells[index].Value.ToString();
-                    var callValue2 = PointerTable.Rows[e.RowIndex2].Cells[index].Value.ToString();
-                    if (string.IsNullOrEmpty(callValue1))
-                    {
-                        if (string.IsNullOrEmpty(callValue2))
-                        {
-                            e.SortResult = 0;
-                        }
-                        else
-                        {
-                            e.SortResult = -1;
-                        }
-                    }
-                    else
-                    {
-                        if (string.IsNullOrEmpty(callValue2))
-                        {
-                            e.SortResult = 1;
-                        }
-                        else
-                        {
-                            e.SortResult = Math.Sign((long)uint.Parse(callValue1, NumberStyles.HexNumber) - uint.Parse(callValue2, NumberStyles.HexNumber));
-                        }
-                    }
-                    index--;
-                }
-                e.Handled = true;
+                PointerDataLabel.Text = "";
             }
-        }
-
-        private void PointerTable_CurrentCellChanged(object sender, EventArgs e)
-        {
-            if (APIContainer != null)
-            {
-
-                if (PointerTable.SelectedRows.Count == 1)
-                {
-                    var kvp = ChainRowMap.FirstOrNull(kvp => kvp.Value == PointerTable.SelectedRows[0]);
-                    if (kvp != null)
-                    {
-                        var chain = kvp.Value.Key;
-                        uint addr_size_uint = (uint)AddressSize;
-                        var address_format = "X" + (addr_size_uint * 2);
-                        var addr = MemoryHelper.ReadMemory(MemoryDomains.MainMemory, chain.StartAddress, AddressSize);
-                        var msg = string.Format("[{0:" + address_format + "}]=>{1:" + address_format + "}", chain.StartAddress + RAMOffset, addr);
-                        for (int i = 0; i < chain.Offsets.Count; i++)
-                        {
-                            uint offset = chain.Offsets[i];
-                            if (i == chain.Offsets.Count - 1)
-                            {
-                                msg += string.Format("\n{0:" + address_format + "}+{1:X}={2:" + address_format + "}", addr, offset, addr + offset);
-                            }
-                            else
-                            {
-                                var new_addr = MemoryHelper.ReadMemory(MemoryDomains.MainMemory, addr + offset - RAMOffset, AddressSize);
-                                msg += string.Format("\n[{0:" + address_format + "}+{1:X}]=>{2:" + address_format + "}", addr, offset, new_addr);
-                                addr = new_addr;
-                            }
-                        }
-                        PointerDataLabel.Text = msg;
-                    }
-                    return;
-                }
-            }
-            PointerDataLabel.Text = "";
         }
     }
 }
